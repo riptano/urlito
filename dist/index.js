@@ -2,6 +2,69 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
+function _typeof(obj) {
+  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+    _typeof = function (obj) {
+      return typeof obj;
+    };
+  } else {
+    _typeof = function (obj) {
+      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    };
+  }
+
+  return _typeof(obj);
+}
+
+function _defineProperty(obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+
+  return obj;
+}
+
+function ownKeys(object, enumerableOnly) {
+  var keys = Object.keys(object);
+
+  if (Object.getOwnPropertySymbols) {
+    var symbols = Object.getOwnPropertySymbols(object);
+    if (enumerableOnly) symbols = symbols.filter(function (sym) {
+      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+    });
+    keys.push.apply(keys, symbols);
+  }
+
+  return keys;
+}
+
+function _objectSpread2(target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i] != null ? arguments[i] : {};
+
+    if (i % 2) {
+      ownKeys(source, true).forEach(function (key) {
+        _defineProperty(target, key, source[key]);
+      });
+    } else if (Object.getOwnPropertyDescriptors) {
+      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+    } else {
+      ownKeys(source).forEach(function (key) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+      });
+    }
+  }
+
+  return target;
+}
+
 var has = Object.prototype.hasOwnProperty;
 var isArray = Array.isArray;
 
@@ -3584,68 +3647,63 @@ function createBrowserHistory(props) {
   return history;
 }
 
-const setUriSearchString = search => {
-    const history = createBrowserHistory();
-    
-    history.replace({
-        ...window.location,
-        search: typeof search === 'object' ? lib.stringify(search) : search,
+var setUriSearchString = function setUriSearchString(search) {
+  var history = createBrowserHistory();
+  history.replace(_objectSpread2({}, window.location, {
+    search: _typeof(search) === 'object' ? lib.stringify(search) : search
+  }));
+}; // window.location.search returns ?data=1&data=2 for example (notice with the question mark)
+
+
+var getValuesFromUri = function getValuesFromUri(keys) {
+  var defaults = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+  var values = _objectSpread2({}, defaults);
+
+  try {
+    var query = lib.parse(window.location.search.substring(1));
+    keys.forEach(function (key) {
+      if (key in query) {
+        values[key] = query[key];
+      }
     });
-};
+  } catch (e) {// This block is intentionally left blank to defang ESLint no-empty rule.
+  }
 
-// window.location.search returns ?data=1&data=2 for example (notice with the question mark)
-const getValuesFromUri = (keys, defaults = {}) => {
-    const values = { ...defaults };
-    
-    try {
-        const query = lib.parse(window.location.search.substring(1));
-        
-        keys.forEach(key => {
-            if (key in query) {
-                values[key] = query[key];
-            }
-        });
+  return values;
+};
+var setValuesToUri = function setValuesToUri(keys) {
+  var values = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  var defaults = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  var query = lib.parse(window.location.search.substring(1));
+
+  var newQuery = _objectSpread2({}, query);
+
+  keys.forEach(function (key) {
+    var value = values[key];
+
+    if (Object.is(value, defaults[key])) {
+      delete newQuery[key];
+    } else {
+      newQuery[key] = value;
     }
-    catch (e) {
-        // This block is intentionally left blank to defang ESLint no-empty rule.
-    }
-    
-    return values;
+  });
+
+  if (!isEqual_1(query, newQuery)) {
+    setUriSearchString(newQuery);
+  }
+}; // Test utilities
+
+var oldSearch;
+var getLocation = function getLocation() {
+  return location;
 };
-
-const setValuesToUri = (keys, values = {}, defaults = {}) => {
-    const query = lib.parse(window.location.search.substring(1));
-    const newQuery = { ...query };
-    
-    keys.forEach(key => {
-        const value = values[key];
-        
-        if (Object.is(value, defaults[key])) {
-            delete newQuery[key];
-        }
-        else {
-            newQuery[key] = value;
-        }
-    });
-    
-    if (!isEqual_1(query, newQuery)) {
-        setUriSearchString(newQuery);
-    }
+var mockSearch = function mockSearch(search) {
+  oldSearch = window.location.search;
+  setUriSearchString(search);
 };
-
-// Test utilities
-let oldSearch;
-
-const getLocation = () => location;
-
-const mockSearch = search => {
-    oldSearch = window.location.search;
-    
-    setUriSearchString(search);
-};
-
-const unmockSearch = () => {
-    setUriSearchString(oldSearch);
+var unmockSearch = function unmockSearch() {
+  setUriSearchString(oldSearch);
 };
 
 exports.getLocation = getLocation;
