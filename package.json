@@ -1,6 +1,6 @@
 {
   "name": "urlito",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Simple API for persisting data structures to URL",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
