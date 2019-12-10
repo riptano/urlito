@@ -1,78 +1,9 @@
-'use strict';
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
-
-var isEqual = _interopDefault(require('lodash.isequal'));
-var cloneDeep = _interopDefault(require('lodash.clonedeep'));
-var has$3 = _interopDefault(require('lodash.has'));
-var get = _interopDefault(require('lodash.get'));
-var set = _interopDefault(require('lodash.set'));
-var unset = _interopDefault(require('lodash.unset'));
-
-function _typeof(obj) {
-  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-    _typeof = function (obj) {
-      return typeof obj;
-    };
-  } else {
-    _typeof = function (obj) {
-      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    };
-  }
-
-  return _typeof(obj);
-}
-
-function _defineProperty(obj, key, value) {
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
-
-  return obj;
-}
-
-function ownKeys(object, enumerableOnly) {
-  var keys = Object.keys(object);
-
-  if (Object.getOwnPropertySymbols) {
-    var symbols = Object.getOwnPropertySymbols(object);
-    if (enumerableOnly) symbols = symbols.filter(function (sym) {
-      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-    });
-    keys.push.apply(keys, symbols);
-  }
-
-  return keys;
-}
-
-function _objectSpread2(target) {
-  for (var i = 1; i < arguments.length; i++) {
-    var source = arguments[i] != null ? arguments[i] : {};
-
-    if (i % 2) {
-      ownKeys(source, true).forEach(function (key) {
-        _defineProperty(target, key, source[key]);
-      });
-    } else if (Object.getOwnPropertyDescriptors) {
-      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-    } else {
-      ownKeys(source).forEach(function (key) {
-        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-      });
-    }
-  }
-
-  return target;
-}
+import isEqual from 'lodash.isequal';
+import cloneDeep from 'lodash.clonedeep';
+import has$3 from 'lodash.has';
+import get from 'lodash.get';
+import set from 'lodash.set';
+import unset from 'lodash.unset';
 
 var has = Object.prototype.hasOwnProperty;
 var isArray = Array.isArray;
@@ -1455,160 +1386,114 @@ function createBrowserHistory(props) {
   return history;
 }
 
-var identity = function identity(o) {
-  return o;
+const identity = o => o;
+
+const setUriSearchString = search => {
+    const history = createBrowserHistory();
+    
+    history.replace({
+        ...window.location,
+        search: typeof search === 'object' ? lib.stringify(search) : search,
+    });
 };
 
-var setUriSearchString = function setUriSearchString(search) {
-  var history = createBrowserHistory();
-  history.replace(_objectSpread2({}, window.location, {
-    search: _typeof(search) === 'object' ? lib.stringify(search) : search
-  }));
+const normalizeKeys = keys => {
+    if (Array.isArray(keys)) {
+        return keys.map(key => ({
+            key,
+            uriKey: key,
+            fromUri: identity,
+            toUri: identity,
+            equals: isEqual,
+        }));
+    }
+    else {
+        return Object.keys(keys).map(key => {
+            const options = keys[key];
+            
+            return {
+                key,
+                uriKey: options.uriKey || key,
+                fromUri: options.fromUri || identity,
+                toUri: options.toUri || identity,
+                equals: options.comparator || isEqual,
+            };
+        });
+    }
 };
 
-var normalizeKeys = function normalizeKeys(keys) {
-  if (Array.isArray(keys)) {
-    return keys.map(function (key) {
-      return {
-        key: key,
-        uriKey: key,
-        fromUri: identity,
-        toUri: identity,
-        equals: isEqual
-      };
-    });
-  } else {
-    return Object.keys(keys).map(function (key) {
-      var options = keys[key];
-      return {
-        key: key,
-        uriKey: options.uriKey || key,
-        fromUri: options.fromUri || identity,
-        toUri: options.toUri || identity,
-        equals: options.comparator || isEqual
-      };
-    });
-  }
-}; // window.location.search returns ?data=1&data=2 for example (notice with the question mark)
-
-var getValuesFromUri = function getValuesFromUri(stateKeys) {
-  var defaults = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-  var values = cloneDeep(defaults);
-
-  try {
-    var query = lib.parse(window.location.search.substring(1));
-    var keys = normalizeKeys(stateKeys);
-    var _iteratorNormalCompletion = true;
-    var _didIteratorError = false;
-    var _iteratorError = undefined;
+// window.location.search returns ?data=1&data=2 for example (notice with the question mark)
+const getValuesFromUri = (stateKeys, defaults = {}) => {
+    const values = cloneDeep(defaults);
 
     try {
-      for (var _iterator = keys[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-        var _step$value = _step.value,
-            key = _step$value.key,
-            uriKey = _step$value.uriKey,
-            fromUri = _step$value.fromUri,
-            equals = _step$value.equals;
-
-        if (has$3(query, uriKey)) {
-          var value = fromUri(get(query, uriKey));
-          var defaultValue = get(defaults, key);
-
-          if (!equals(value, defaultValue)) {
-            set(values, key, value);
-          }
+        const query = lib.parse(window.location.search.substring(1));
+        const keys = normalizeKeys(stateKeys);
+        
+        for (const { key, uriKey, fromUri, equals } of keys) {
+            if (has$3(query, uriKey)) {
+                const value = fromUri(get(query, uriKey));
+                const defaultValue = get(defaults, key);
+                
+                if (!equals(value, defaultValue)) {
+                    set(values, key, value);
+                }
+            }
         }
-      }
-    } catch (err) {
-      _didIteratorError = true;
-      _iteratorError = err;
-    } finally {
-      try {
-        if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-          _iterator["return"]();
+    }
+    catch (e) {
+        // This block is intentionally left blank to defang ESLint no-empty rule.
+    }
+    
+    return values;
+};
+
+const setValuesToUri = (stateKeys, values = {}, defaults = {}) => {
+    const query = lib.parse(window.location.search.substring(1));
+    const newQuery = cloneDeep(query);
+    
+    const keys = normalizeKeys(stateKeys);
+    
+    for (const { key, uriKey, toUri, equals } of keys) {
+        const value = get(values, key);
+        const defaultValue = get(defaults, key);
+        
+        if (equals(value, defaultValue)) {
+            unset(newQuery, uriKey);
         }
-      } finally {
-        if (_didIteratorError) {
-          throw _iteratorError;
+        else {
+            set(newQuery, uriKey, toUri(value));
         }
-      }
     }
-  } catch (e) {// This block is intentionally left blank to defang ESLint no-empty rule.
-  }
-
-  return values;
-};
-var setValuesToUri = function setValuesToUri(stateKeys) {
-  var values = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-  var defaults = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-  var query = lib.parse(window.location.search.substring(1));
-  var newQuery = cloneDeep(query);
-  var keys = normalizeKeys(stateKeys);
-  var _iteratorNormalCompletion2 = true;
-  var _didIteratorError2 = false;
-  var _iteratorError2 = undefined;
-
-  try {
-    for (var _iterator2 = keys[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-      var _step2$value = _step2.value,
-          key = _step2$value.key,
-          uriKey = _step2$value.uriKey,
-          toUri = _step2$value.toUri,
-          equals = _step2$value.equals;
-      var value = get(values, key);
-      var defaultValue = get(defaults, key);
-
-      if (equals(value, defaultValue)) {
-        unset(newQuery, uriKey);
-      } else {
-        set(newQuery, uriKey, toUri(value));
-      }
+    
+    if (!isEqual(query, newQuery)) {
+        setUriSearchString(newQuery);
     }
-  } catch (err) {
-    _didIteratorError2 = true;
-    _iteratorError2 = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
-        _iterator2["return"]();
-      }
-    } finally {
-      if (_didIteratorError2) {
-        throw _iteratorError2;
-      }
-    }
-  }
-
-  if (!isEqual(query, newQuery)) {
-    setUriSearchString(newQuery);
-  }
 };
 
-var stateToUri = function stateToUri(defaultState, stateKeys) {
-  stateKeys = stateKeys || Object.keys(defaultState);
-  return [function () {
-    return getValuesFromUri(stateKeys, defaultState);
-  }, function (store) {
-    return setValuesToUri(stateKeys, store, defaultState);
-  }];
+const stateToUri = (defaultState, stateKeys) => {
+    stateKeys = stateKeys || Object.keys(defaultState);
+    
+    return [
+        () => getValuesFromUri(stateKeys, defaultState),
+        store => setValuesToUri(stateKeys, store, defaultState)
+    ];
 };
 
-var oldSearch;
-var getLocation = function getLocation() {
-  return location;
-};
-var mockSearch = function mockSearch(search) {
-  oldSearch = window.location.search;
-  setUriSearchString(search);
-};
-var unmockSearch = function unmockSearch() {
-  setUriSearchString(oldSearch);
+// Test utilities
+let oldSearch;
+
+const getLocation = () => location;
+
+const mockSearch = search => {
+    oldSearch = window.location.search;
+    
+    setUriSearchString(search);
 };
 
-exports.default = stateToUri;
-exports.getLocation = getLocation;
-exports.getValuesFromUri = getValuesFromUri;
-exports.mockSearch = mockSearch;
-exports.normalizeKeys = normalizeKeys;
-exports.setValuesToUri = setValuesToUri;
-exports.unmockSearch = unmockSearch;
+const unmockSearch = () => {
+    setUriSearchString(oldSearch);
+};
+
+export default stateToUri;
+export { getLocation, getValuesFromUri, mockSearch, normalizeKeys, setValuesToUri, unmockSearch };
